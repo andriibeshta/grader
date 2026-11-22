@@ -110,6 +110,53 @@ docker compose up -d
 curl -sS http://127.0.0.1:9131/health/ready
 ```
 
+## Minimal docker-compose.yml
+
+If you do not need the full release Compose file, this is enough:
+
+```yaml
+name: grader
+
+services:
+  grader:
+    image: grader:0.2.8
+    restart: unless-stopped
+    user: "${GRADER_UID:-1000}:${GRADER_GID:-1000}"
+    env_file: .env
+    environment:
+      GRADER_DATA_DIR: /data
+      GRADER_LDR_ENABLED: "${GRADER_LDR_ENABLED:-false}"
+    ports:
+      - "9131:9131"
+    volumes:
+      - ./state:/data
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9131/health/ready', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+```
+
+Then:
+
+```bash
+mkdir -p state
+docker load -i grader-0.2.8.tar.gz
+docker compose up -d
+curl -sS http://127.0.0.1:9131/health/ready
+```
+
+For a source build, replace `image: grader:0.2.8` with `build: .` and run
+`docker compose up -d --build`.
+
+The full [`docker-compose.release.yml`](docker-compose.release.yml) adds
+read-only root, dropped capabilities, logging limits, and configurable bind
+address/port/UID/GID. Use that for a production deployment.
+
 ## Configuration
 
 Only two values are required:
