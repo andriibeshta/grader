@@ -83,7 +83,7 @@ The release image is self-contained:
 
 ```bash
 mkdir -p ~/grader && cd ~/grader
-gunzip -c grader-0.2.9.tar.gz | docker load
+gunzip -c grader-0.2.10.tar.gz | docker load
 cp .env.example .env
 
 # Set these two required values:
@@ -119,7 +119,7 @@ name: grader
 
 services:
   grader:
-    image: grader:0.2.9
+    image: grader:0.2.10
     restart: unless-stopped
     user: "${GRADER_UID:-1000}:${GRADER_GID:-1000}"
     env_file: .env
@@ -145,12 +145,12 @@ Then:
 
 ```bash
 mkdir -p state
-docker load -i grader-0.2.9.tar.gz
+docker load -i grader-0.2.10.tar.gz
 docker compose up -d
 curl -sS http://127.0.0.1:9131/health/ready
 ```
 
-For a source build, replace `image: grader:0.2.9` with `build: .` and run
+For a source build, replace `image: grader:0.2.10` with `build: .` and run
 `docker compose up -d --build`.
 
 The full [`docker-compose.release.yml`](docker-compose.release.yml) adds

@@ -40,6 +40,14 @@ class IngestTests(unittest.TestCase):
         self.assertFalse(report_usable("Final synthesis produced no usable text."))
         self.assertFalse(report_usable("short report"))
 
+    def test_ldr_failure_page_not_usable(self):
+        text = (
+            "# ⚠️ Research Failed\n\n**Error Type:** Unexpected Error\n\n"
+            "**What happened:** The LLM request took too long to complete.\n\n"
+            "## Research Metrics\n- Search Iterations: 1\n"
+        )
+        self.assertFalse(report_usable(text))
+
     def test_usable(self):
         text = "# Report\n" + ("word " * 120) + "\n## Sources\nx"
         self.assertTrue(report_usable(text))

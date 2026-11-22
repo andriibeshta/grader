@@ -31,7 +31,14 @@ def paper_key(text: str, rubric_id: str, query_text: str) -> str:
 
 def report_usable(text: str) -> bool:
     t = normalize_text(text)
-    if "Final synthesis produced no usable text" in t[:500]:
+    head = t[:800].lower()
+    # LDR can return a failure page with a completed history status.
+    if any(marker in head for marker in (
+        "research failed",
+        "final synthesis failed",
+        "final synthesis produced no usable text",
+        "the llm request took too long",
+    )):
         return False
     if len(t.split()) < 80:
         return False

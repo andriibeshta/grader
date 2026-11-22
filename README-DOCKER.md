@@ -173,15 +173,15 @@ Use `docker save`/`docker load` for now:
 
 ```bash
 # current VM
-docker save grader:0.2.9 | gzip > dist/grader-0.2.9.tar.gz
-sha256sum dist/grader-0.2.9.tar.gz
+docker save grader:0.2.10 | gzip > dist/grader-0.2.10.tar.gz
+sha256sum dist/grader-0.2.10.tar.gz
 
 # copy the image and these files to the remote host
-scp dist/grader-0.2.9.tar.gz remote-host:/tmp/
+scp dist/grader-0.2.10.tar.gz remote-host:/tmp/
 scp docker-compose.yml config.json .env remote-host:~/grader/
 
 # remote host
-gunzip -c /tmp/grader-0.2.9.tar.gz | docker load
+gunzip -c /tmp/grader-0.2.10.tar.gz | docker load
 cd ~/.hermes/workspace/grader
 mkdir -p state/reports state/backups
 # copy state/ from the old VM or restore the latest backup
