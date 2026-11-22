@@ -1,0 +1,39 @@
+# Local secrets and state
+.env
+.env.*
+!.env.example
+state/
+dist/
+reports/
+backups/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-*
+api_token
+watcher_state.json
+chart.png
+chart.json
+grades.jsonl
+grades/
+benchmark_grades*
+swift_q4ks_grades*
+calibration/report.json
+calibration/benchmark.anchors.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

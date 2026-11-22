@@ -1,0 +1,8 @@
+{
+  "Q1": {"owner": "andrii", "reviewed_at": "2026-11-21", "review_after": "2027-05-21", "calibration_status": "provisional"},
+  "Q2": {"owner": "andrii", "reviewed_at": "2026-11-21", "review_after": "2027-05-21", "calibration_status": "provisional"},
+  "Q3": {"owner": "andrii", "reviewed_at": "2026-11-21", "review_after": "2027-05-21", "calibration_status": "provisional"},
+  "Q4": {"owner": "andrii", "reviewed_at": "2026-11-22", "review_after": "2027-01-31", "calibration_status": "provisional"},
+  "Q5": {"owner": "andrii", "reviewed_at": "2026-11-21", "review_after": "2027-05-21", "calibration_status": "provisional"},
+  "generic_research_v1": {"owner": "andrii", "reviewed_at": "2026-11-21", "review_after": "2027-05-21", "calibration_status": "shadow"}
+}

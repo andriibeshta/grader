@@ -1,0 +1,66 @@
+# Image-only deployment for sharing the Grader with another host.
+#
+#   docker load -i grader-0.2.7.tar.gz
+#   cp .env.example .env        # set the two required secrets
+#   mkdir -p state
+#   docker compose -f docker-compose.release.yml up -d
+#
+# This file deliberately has no `build:` section, so it works from a directory
+# containing only the image, compose file, .env, and config.json.
+
+name: grader
+
+services:
+  grader:
+    image: ${GRADER_IMAGE:-grader:0.2.7}
+    restart: always
+    user: "${GRADER_UID:-1000}:${GRADER_GID:-1000}"
+    environment:
+      GRADER_DATA_DIR: /data
+      GRADER_BACKUP_DIR: /data/backups
+      GRADER_LDR_COOKIE: /data/ldr_cookies
+      GRADER_HOST: ${GRADER_HOST:-0.0.0.0}
+      GRADER_PORT: ${GRADER_PORT:-9131}
+      GRADER_WORKER_THREADS: ${GRADER_WORKER_THREADS:-2}
+      GRADER_JUDGE_ATTEMPTS: ${GRADER_JUDGE_ATTEMPTS:-4}
+      GRADER_RUBRIC_OVERLAY: ${GRADER_RUBRIC_OVERLAY:-}
+      GRADER_QUERIES_FILE: ${GRADER_QUERIES_FILE:-}
+      GRADER_LDR_BASE: ${GRADER_LDR_BASE:-http://127.0.0.1:5000}
+      GRADER_LDR_ENABLED: ${GRADER_LDR_ENABLED:-false}
+      GRADER_OPENROUTER_BASE: ${GRADER_OPENROUTER_BASE:-https://openrouter.ai/api/v1}
+      GRADER_PRIMARY_MODEL: ${GRADER_PRIMARY_MODEL:-deepseek/deepseek-v4-flash}
+      GRADER_SECONDARY_MODEL: ${GRADER_SECONDARY_MODEL:-z-ai/glm-5.3-flash}
+      GRADER_TIEBREAKER_MODEL: ${GRADER_TIEBREAKER_MODEL:-deepseek/deepseek-v4-pro}
+      GRADER_API_TOKEN: ${GRADER_API_TOKEN:?GRADER_API_TOKEN must be set in .env}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?OPENROUTER_API_KEY must be set in .env}
+      LDR_USER: ${LDR_USER:-}
+      LDR_PASS: ${LDR_PASS:-}
+    ports:
+      - "${GRADER_BIND_IP:-0.0.0.0}:${GRADER_PUBLISH_PORT:-9131}:${GRADER_PORT:-9131}"
+    volumes:
+      - "${GRADER_STATE_DIR:-./state}:/data"
+      # Optional custom rubrics/queries:
+      # - "${GRADER_RUBRIC_HOST_DIR:-./custom-rubrics}:/config/rubrics:ro"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:${GRADER_PORT:-9131}/health/ready', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

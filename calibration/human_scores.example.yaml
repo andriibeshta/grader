@@ -1,0 +1,63 @@
+# Example anchor file for grader.calibration.
+#
+# THESE NUMBERS ARE ILLUSTRATIVE, NOT HUMAN TRUTH.
+# The overall values are taken from the earlier provisional manual comparison
+# in grader/calibration.json; the per-criterion values are placeholders to show
+# the format. Replace every value with a real manual review before drawing
+# conclusions from a calibration report.
+#
+# Anchor fields:
+#   paper_id             exact papers.paper_id (highest-priority match)
+#   query_id + model_id  required when paper_id is absent
+#   title                optional extra filter for query_id + model_id
+#   expected             overall (required) plus the six criteria
+#   label/source/notes   optional provenance, echoed in the report
+#
+# Supported YAML subset: comments, a top-level "- " list of mappings, nested
+# mappings, and quoted or bare scalars. Use a .json anchor file for anything
+# richer (flow collections, block scalars, multi-document files).
+#
+# Run:
+#   python3 -m grader.calibration \
+#     --anchors calibration/human_scores.example.yaml \
+#     --db grades.db --out calibration/report.json
+
+- label: "Q4/qwen3.8-27b-q4_k_s (paper_id match)"
+  paper_id: "6c6e08daba054142a0977891debaf91e"
+  source: "calibration.json manual overall; criteria illustrative"
+  notes: "Example only — replace with a real human review."
+  expected:
+    overall: 9.1
+    accuracy: 8.0
+    coverage: 9.0
+    critical: 9.0
+    sources: 7.0
+    structure: 8.5
+    action: 7.0
+
+- label: "Q3/qwen3.8-27b-q4_k_xl (query+model+title)"
+  query_id: "Q3"
+  model_id: "qwen3.8-27b-q4_k_xl"
+  title: "Benchmark Q3 / qwen3.8-27b-q4_k_xl"
+  source: "calibration.json manual overall; criteria illustrative"
+  expected:
+    overall: 8.63
+    accuracy: 8.5
+    coverage: 8.0
+    critical: 8.5
+    sources: 7.0
+    structure: 8.5
+    action: 7.5
+
+- label: "Q5/gemma-4-26b-a4b-qat (query+model)"
+  query_id: "Q5"
+  model_id: "gemma-4-26b-a4b-qat"
+  source: "calibration.json manual overall; criteria illustrative"
+  expected:
+    overall: 6.58
+    accuracy: 6.5
+    coverage: 6.0
+    critical: 6.0
+    sources: 5.5
+    structure: 8.0
+    action: 6.5
