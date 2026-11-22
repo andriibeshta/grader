@@ -64,7 +64,7 @@ LDR is disabled by default. If you want automatic LDR grading:
 GRADER_LDR_ENABLED=true
 GRADER_LDR_BASE=http://127.0.0.1:5000
 LDR_USER=your-ldr-user
-LDR_PASS=your-ldr-password
+LDR_PASS=<your-ldr-password>
 ```
 
 If LDR runs in another container/host, use its reachable URL instead of
