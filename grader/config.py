@@ -8,16 +8,15 @@ import secrets
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-CODE_DATA_DIR = BASE_DIR / "data"
 CODE_RUBRIC_DIR = BASE_DIR / "rubrics"
 # The service ships a generic rubric set. A deployment can point at a
 # read-only overlay (for custom rubrics/queries) without rebuilding the image.
 RUBRIC_DIR = Path(os.environ.get("GRADER_RUBRIC_DIR", "").strip() or str(CODE_RUBRIC_DIR))
 _overlay = os.environ.get("GRADER_RUBRIC_OVERLAY", "").strip()
 RUBRIC_OVERLAY_DIR = Path(_overlay) if _overlay else None
-RUBRIC_GLOBAL_PATH = Path(os.environ.get("GRADER_RUBRIC_GLOBAL", "").strip() or str(BASE_DIR / "rubric_global.md"))
 GENERIC_GLOBAL_PATH = Path(os.environ.get("GRADER_RUBRIC_GENERIC_GLOBAL", "").strip() or str(BASE_DIR / "rubric_global_generic.md"))
-QUERIES_PATH = Path(os.environ.get("GRADER_QUERIES_FILE", "").strip() or str(CODE_DATA_DIR / "queries.json"))
+_queries_file = os.environ.get("GRADER_QUERIES_FILE", "").strip()
+QUERIES_PATH = Path(_queries_file) if _queries_file else None
 _RUNTIME_DIR = os.environ.get("GRADER_DATA_DIR", "").strip()
 DATA_DIR = Path(_RUNTIME_DIR) if _RUNTIME_DIR else BASE_DIR
 CONFIG_PATH = Path(os.environ.get("GRADER_CONFIG", str(BASE_DIR / "config.json")))
@@ -179,7 +178,7 @@ def ldr_credentials() -> tuple[str, str]:
 
 
 def query_map() -> dict[str, str]:
-    if not QUERIES_PATH.exists():
+    if QUERIES_PATH is None or not QUERIES_PATH.exists():
         return {}
     return json.loads(QUERIES_PATH.read_text())
 
@@ -193,13 +192,13 @@ def _rubric_file(rubric_id: str) -> Path | None:
 
 
 def _global_for(rubric_id: str) -> Path:
-    name = "rubric_global_generic.md" if rubric_id == "generic_research_v1" or rubric_id not in ("Q1", "Q2", "Q3", "Q4", "Q5") else "rubric_global.md"
+    """Return the neutral global policy, allowing an overlay to replace it."""
     for d in (RUBRIC_OVERLAY_DIR, RUBRIC_DIR, CODE_RUBRIC_DIR):
         if d:
-            p = d / name
+            p = d / "rubric_global_generic.md"
             if p.exists():
                 return p
-    return GENERIC_GLOBAL_PATH if name == "rubric_global_generic.md" else RUBRIC_GLOBAL_PATH
+    return GENERIC_GLOBAL_PATH
 
 
 def rubric_version(rubric_id: str) -> str:

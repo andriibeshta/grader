@@ -18,8 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY grader ./grader
 COPY rubrics ./rubrics
-COPY data ./data
-COPY rubric_global.md ./
 COPY rubric_global_generic.md ./
 COPY backup.py ./
 COPY VERSION ./

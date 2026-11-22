@@ -12,7 +12,7 @@ import json
 import re
 from pathlib import Path
 
-from .config import CODE_RUBRIC_DIR, GENERIC_GLOBAL_PATH, RUBRIC_DIR, RUBRIC_GLOBAL_PATH, RUBRIC_OVERLAY_DIR, query_map, rubric_version
+from .config import CODE_RUBRIC_DIR, GENERIC_GLOBAL_PATH, RUBRIC_DIR, RUBRIC_OVERLAY_DIR, query_map, rubric_version
 
 QUERIES = query_map()
 
@@ -49,18 +49,13 @@ REGISTRY = _read_registry()
 
 
 def _global_text(rubric_id: str) -> str:
-    # Benchmark rubrics (Q1–Q5) use the benchmark-specific global rubric.
-    # Generic and custom rubrics use the neutral, source-agnostic one.
-    generic = rubric_id == "generic_research_v1" or rubric_id not in ("Q1", "Q2", "Q3", "Q4", "Q5")
-    name = "rubric_global_generic.md" if generic else "rubric_global.md"
+    name = "rubric_global_generic.md"
     for d in (RUBRIC_OVERLAY_DIR, RUBRIC_DIR, CODE_RUBRIC_DIR):
         if d and (d / name).exists():
             return (d / name).read_text()
-    path = GENERIC_GLOBAL_PATH if generic else RUBRIC_GLOBAL_PATH
-    if path.exists():
-        return path.read_text()
-    fallback = GENERIC_GLOBAL_PATH if GENERIC_GLOBAL_PATH.exists() else RUBRIC_GLOBAL_PATH
-    return fallback.read_text() if fallback.exists() else ""
+    if GENERIC_GLOBAL_PATH.exists():
+        return GENERIC_GLOBAL_PATH.read_text()
+    return ""
 
 
 def _normalize(s: str) -> str:
@@ -99,7 +94,7 @@ def resolve(query_text: str | None = None, query_id: str | None = None, rubric_i
         if not p:
             raise RuntimeError(f"unknown rubric {rid}")
         qtext = qtext or QUERIES.get(rid, "")
-        factual = "high" if rid in ("Q1", "Q2", "Q3", "Q4", "Q5") else "low"
+        factual = "low"
 
     if not p:
         raise RuntimeError("generic rubric not found")

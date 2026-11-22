@@ -59,9 +59,7 @@ the overlay may provide `calibration_status` and `review_after`.
 To provide checklist-style query mappings, mount a `queries.json` and set
 `GRADER_QUERIES_FILE=/config/rubrics/queries.json`. Without it, unknown queries
 fall back to `generic_research_v1`, which is safe for arbitrary pipelines.
-
-The bundled `Q1`–`Q5` rubrics are examples from the LDR benchmark; they are not
-required. Use `generic_research_v1` or your own rubric for another pipeline.
+Use `generic_research_v1` or your own rubric for another pipeline.
 
 ## LDR is optional
 

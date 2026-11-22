@@ -74,8 +74,8 @@ never trusted.
 | Actionable conclusion | 10% |
 
 Each criterion is scored `0–10`. The default rubric is
-`generic_research_v1`, a neutral research-report rubric. The bundled `Q1`–`Q5`
-rubrics are optional examples.
+`generic_research_v1`, a neutral research-report rubric. Use a custom rubric
+and optional query map when you have a domain-specific checklist.
 
 ## Quick start — image-only
 
@@ -83,7 +83,7 @@ The release image is self-contained:
 
 ```bash
 mkdir -p ~/grader && cd ~/grader
-gunzip -c grader-0.2.8.tar.gz | docker load
+gunzip -c grader-0.2.9.tar.gz | docker load
 cp .env.example .env
 
 # Set these two required values:
@@ -119,7 +119,7 @@ name: grader
 
 services:
   grader:
-    image: grader:0.2.8
+    image: grader:0.2.9
     restart: unless-stopped
     user: "${GRADER_UID:-1000}:${GRADER_GID:-1000}"
     env_file: .env
@@ -145,12 +145,12 @@ Then:
 
 ```bash
 mkdir -p state
-docker load -i grader-0.2.8.tar.gz
+docker load -i grader-0.2.9.tar.gz
 docker compose up -d
 curl -sS http://127.0.0.1:9131/health/ready
 ```
 
-For a source build, replace `image: grader:0.2.8` with `build: .` and run
+For a source build, replace `image: grader:0.2.9` with `build: .` and run
 `docker compose up -d --build`.
 
 The full [`docker-compose.release.yml`](docker-compose.release.yml) adds
@@ -330,8 +330,7 @@ grader/                 service package
   charts.py             chart rendering
   cli.py                CLI client
 tests/                  network-free tests
-rubrics/                bundled rubric examples
-data/queries.json       optional query map
+rubrics/                generic rubric
 backup.py               verified SQLite backup
 Dockerfile
 docker-compose.yml      source build

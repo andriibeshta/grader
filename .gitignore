@@ -17,10 +17,6 @@ chart.png
 chart.json
 grades.jsonl
 grades/
-benchmark_grades*
-swift_q4ks_grades*
-calibration/report.json
-calibration/benchmark.anchors.yaml
 
 # Python
 __pycache__/

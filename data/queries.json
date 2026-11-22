@@ -1,7 +1,0 @@
-{
-  "Q1": "Compare the memory bandwidth, VRAM capacity, and real-world local LLM token generation speeds (tok/s) of the NVIDIA RTX 5090 against the RTX 3090 and RTX 4090 when running 4-bit quantized 27B to 32B parameter models.",
-  "Q2": "Compare Ceph and MinIO for a small self-hosted object-storage cluster (3 nodes, 50 TB usable): architecture, operational complexity, performance, failure modes, and when to choose each.",
-  "Q3": "Compare pgvector, Qdrant, and Milvus for a self-hosted RAG system with 10 million embeddings, 50 QPS, and hybrid search requirements.",
-  "Q4": "What are the most consequential changes to EU AI Act obligations for general-purpose AI providers between 2025 and 2027, and what should a small provider do first?",
-  "Q5": "Should a 5-person engineering team running 20 services on Docker Compose migrate to Kubernetes in 2026? Give a decision framework, costs, risks, and a recommendation."
-}

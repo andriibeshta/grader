@@ -20,7 +20,6 @@ api_token
 config.json
 dist
 **/*.tar.gz
-benchmark_grades*
 chart.png
 chart.json
 watcher_state.json

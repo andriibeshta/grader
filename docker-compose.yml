@@ -3,7 +3,7 @@ name: grader
 services:
   grader:
     build: .
-    image: grader:0.2.8
+    image: grader:0.2.9
     restart: always
     user: "${GRADER_UID:-1000}:${GRADER_GID:-1000}"
     environment:

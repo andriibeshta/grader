@@ -70,15 +70,6 @@ class IngestTests(unittest.TestCase):
 
 
 class RubricTests(unittest.TestCase):
-    def test_query(self):
-        r = resolve(query_id="Q1")
-        self.assertEqual(r["rubric_id"], "Q1")
-        self.assertEqual(r["factual_confidence"], "high")
-
-    def test_exact_query_text(self):
-        r = resolve(query_text="Compare the memory bandwidth, VRAM capacity, and real-world local LLM token generation speeds (tok/s) of the NVIDIA RTX 5090 against the RTX 3090 and RTX 4090 when running 4-bit quantized 27B to 32B parameter models.")
-        self.assertEqual(r["rubric_id"], "Q1")
-
     def test_generic(self):
         r = resolve(query_text="A novel question")
         self.assertEqual(r["rubric_id"], "generic_research_v1")
@@ -87,10 +78,15 @@ class RubricTests(unittest.TestCase):
         self.assertIn("source-agnostic", r["rubric_text"])
         self.assertNotIn("ldr-benchmark", r["rubric_text"])
 
-    def test_q4_review_metadata(self):
-        r = resolve(query_id="Q4")
-        self.assertEqual(r["calibration_status"], "provisional")
-        self.assertEqual(r["review_after"], "2027-01-31")
+    def test_custom_query_mapping(self):
+        with tempfile.TemporaryDirectory() as td:
+            Path(td, "my_rubric.md").write_text("# My rubric\n\nScore this report.\n")
+            with patch("grader.rubrics.QUERIES", {"my_rubric": "Custom question"}), \
+                 patch("grader.rubrics.RUBRIC_OVERLAY_DIR", Path(td)):
+                r = resolve(query_id="my_rubric")
+        self.assertEqual(r["rubric_id"], "my_rubric")
+        self.assertEqual(r["query_text"], "Custom question")
+        self.assertEqual(r["factual_confidence"], "low")
 
     def test_custom_rubric_overlay(self):
         with tempfile.TemporaryDirectory() as td:
@@ -122,7 +118,7 @@ class DatabaseTests(unittest.TestCase):
         self.assertIn("temperature", cols)
 
     def test_paper_idempotency(self):
-        d = ingest_text("# R\n" + ("word " * 120), query_id="Q1", title="x")
+        d = ingest_text("# R\n" + ("word " * 120), title="x")
         p1, c1 = db.create_paper(d)
         p2, c2 = db.create_paper(d)
         self.assertTrue(c1)
@@ -138,9 +134,9 @@ class DatabaseTests(unittest.TestCase):
         self.assertTrue(db.judge_available("bad"))
 
     def test_only_one_current_grade(self):
-        paper, _ = db.create_paper(ingest_text("# R\n" + ("word " * 120), query_id="Q1", title="current"))
+        paper, _ = db.create_paper(ingest_text("# R\n" + ("word " * 120), title="current"))
         base = {
-            "paper_id": paper["paper_id"], "rubric_id": "Q1", "rubric_version": "v1",
+            "paper_id": paper["paper_id"], "rubric_id": "generic_research_v1", "rubric_version": "v1",
             "judge_pool": "test", "accuracy": 8, "coverage": 8, "critical": 8,
             "sources": 8, "structure": 8, "action": 8, "overall": 8,
             "report_usable": True,
@@ -155,9 +151,9 @@ class DatabaseTests(unittest.TestCase):
         self.assertEqual(current["grade_id"], g2)
 
     def test_forced_grade_replaces_cache_key_without_unique_conflict(self):
-        paper, _ = db.create_paper(ingest_text("# R\n" + ("word " * 120), query_id="Q1", title="force"))
+        paper, _ = db.create_paper(ingest_text("# R\n" + ("word " * 120), title="force"))
         base = {
-            "paper_id": paper["paper_id"], "rubric_id": "Q1", "rubric_version": "v1",
+            "paper_id": paper["paper_id"], "rubric_id": "generic_research_v1", "rubric_version": "v1",
             "judge_pool": "test", "accuracy": 8, "coverage": 8, "critical": 8,
             "sources": 8, "structure": 8, "action": 8, "overall": 8,
             "report_usable": True,
@@ -175,7 +171,7 @@ class DatabaseTests(unittest.TestCase):
 
 class CacheKeyTests(unittest.TestCase):
     def test_rubric_version_changes_cache_key(self):
-        paper = {"content_hash": "abc", "rubric_id": "Q4"}
+        paper = {"content_hash": "abc", "rubric_id": "generic_research_v1"}
         a = pipeline._cache_key(paper, {"rubric_version": "v1"})
         b = pipeline._cache_key(paper, {"rubric_version": "v2"})
         self.assertNotEqual(a, b)
@@ -206,7 +202,7 @@ class JudgeFallbackTests(unittest.TestCase):
              patch.object(judges.db, "judge_available", return_value=True), \
              patch.object(judges.db, "record_judge_success"), \
              patch.object(judges.db, "record_judge_failure"):
-            out = judges.judge_paper("p", "x" * 200, resolve(query_id="Q1"))
+            out = judges.judge_paper("p", "x" * 200, resolve(query_text="test"))
 
         self.assertEqual(out["confidence"], "medium")
         self.assertIn("fallback", out["judge_pool"])
