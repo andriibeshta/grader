@@ -1,5 +1,7 @@
 # Grader
 
+![Grader — a multi-judge paper-grading service for research reports](docs/assets/grader-banner.jpg)
+
 A source-agnostic, multi-judge paper-grading service for research reports.
 
 Grader accepts a report from text, a URL, an uploaded file, or an optional LDR
