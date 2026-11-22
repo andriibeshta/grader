@@ -83,7 +83,7 @@ The release image is self-contained:
 
 ```bash
 mkdir -p ~/grader && cd ~/grader
-gunzip -c grader-0.2.7.tar.gz | docker load
+gunzip -c grader-0.2.8.tar.gz | docker load
 cp .env.example .env
 
 # Set these two required values:

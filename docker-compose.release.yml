@@ -1,6 +1,6 @@
 # Image-only deployment for sharing the Grader with another host.
 #
-#   docker load -i grader-0.2.7.tar.gz
+#   docker load -i grader-0.2.8.tar.gz
 #   cp .env.example .env        # set the two required secrets
 #   mkdir -p state
 #   docker compose -f docker-compose.release.yml up -d
@@ -12,7 +12,7 @@ name: grader
 
 services:
   grader:
-    image: ${GRADER_IMAGE:-grader:0.2.7}
+    image: ${GRADER_IMAGE:-grader:0.2.8}
     restart: always
     user: "${GRADER_UID:-1000}:${GRADER_GID:-1000}"
     environment:
