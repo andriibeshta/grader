@@ -36,6 +36,12 @@ class LDRClient:
 
     def _login(self) -> None:
         user, password = ldr_credentials()
+        # LDR answers HTTP 403 to POST /auth/login when the request carries an
+        # X-CSRF-Token header: the login route validates the token from the login
+        # *form*, so a header left over from the previous session ("token present:
+        # True" in LDR's log) fails validation. Drop it before re-authenticating or
+        # every re-login after a session expiry / LDR restart fails forever.
+        self.session.headers.pop("X-CSRF-Token", None)
         r = self.session.get(f"{self.base}/auth/login", timeout=20)
         m = re.search(r'name=["\']csrf_token["\']\s+value=["\']([^"\']+)', r.text)
         if not m:
@@ -149,6 +155,7 @@ class LdrWatcher(threading.Thread):
             if self.stop.is_set():
                 return
         seen = set(self.state.get("seen") or [])
+        failures = 0
         while not self.stop.is_set():
             try:
                 items = client.history()
@@ -186,9 +193,17 @@ class LdrWatcher(threading.Thread):
                     except Exception as e:
                         # Leave unseen so a transient LDR/report failure retries next poll.
                         print(f"[watcher] failed to ingest {jid}: {type(e).__name__}: {e}", flush=True)
+                failures = 0
             except Exception as e:
+                failures += 1
                 print(f"[watcher] poll error: {type(e).__name__}: {e}", flush=True)
-            self.stop.wait(max(10, int(self.cfg.get("poll_seconds", 60))))
+            # Back off on consecutive failures. A broken login must not hammer LDR
+            # every poll: the login limiter (5 attempts / 15 min) locks the account
+            # for 15 minutes after 10 failures, which would hit the web UI too.
+            wait = max(10, int(self.cfg.get("poll_seconds", 60)))
+            if failures:
+                wait = min(wait * (2 ** min(failures, 4)), 900)
+            self.stop.wait(wait)
 
 
 Watcher = LdrWatcher

@@ -12,7 +12,7 @@ name: grader
 
 services:
   grader:
-    image: ${GRADER_IMAGE:-grader:0.2.10}
+    image: ${GRADER_IMAGE:-grader:0.2.11}
     restart: always
     user: "${GRADER_UID:-1000}:${GRADER_GID:-1000}"
     environment:
