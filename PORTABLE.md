@@ -9,7 +9,7 @@ Hermes installation, on LDR, or on any host-specific path.
 At minimum:
 
 ```text
-grader-0.2.10.tar.gz
+grader-0.2.12.tar.gz
 docker-compose.release.yml
 .env.example
 README-DOCKER.md
@@ -26,7 +26,7 @@ mkdir -p ~/grader
 cd ~/grader
 
 # copy the image and files here, then:
-gunzip -c grader-0.2.10.tar.gz | docker load
+gunzip -c grader-0.2.12.tar.gz | docker load
 
 cp .env.example .env
 # Edit .env:
@@ -131,12 +131,12 @@ The CLI reads `GRADER_BASE_URL` and `GRADER_TOKEN_FILE`.
 Keep the old image tag loaded, then:
 
 ```bash
-gunzip -c grader-0.2.10.tar.gz | docker load
-# change GRADER_IMAGE in .env to grader:0.2.10
+gunzip -c grader-0.2.12.tar.gz | docker load
+# change GRADER_IMAGE in .env to grader:0.2.12
 docker compose -f docker-compose.release.yml up -d
 ```
 
-Rollback by changing `GRADER_IMAGE` back to `grader:0.2.10`. State remains in
+Rollback by changing `GRADER_IMAGE` back to `grader:0.2.12`. State remains in
 `state/`; take a backup before schema-changing releases:
 
 ```bash
@@ -149,7 +149,7 @@ The published image is built for the architecture of the machine that built it.
 For an ARM host, build a multi-arch image:
 
 ```bash
-docker buildx build --platform linux/amd64,linux/arm64 -t grader:0.2.10 .
+docker buildx build --platform linux/amd64,linux/arm64 -t grader:0.2.12 .
 ```
 
 or build directly on the target host.
