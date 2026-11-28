@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 from grader import db
 from grader import judges
 from grader import pipeline
-from grader.config import load_config
+from grader.config import load_config, provider_routing
 from grader.ingest import _safe_url, ingest_bytes, ingest_file, ingest_text, report_usable
 from grader.judges import extract_json, validate
 from grader.rubrics import resolve
@@ -246,11 +246,13 @@ class JudgeRetryTests(unittest.TestCase):
         scores = {"accuracy": 8, "coverage": 8, "critical": 8, "sources": 8, "structure": 8,
                   "action": 8, "fact_errors": [], "notes": "ok"}
         response = Mock(status_code=200)
-        response.json.return_value = {"choices": [{"message": {"content": json.dumps(scores)}}], "usage": {}}
+        response.json.return_value = {"choices": [{"message": {"content": json.dumps(scores)}}],
+                                      "usage": {}, "provider": "DeepSeek"}
+        chain = ["deepseek", "pearl-research"]
         cfg = {
-            "id": "test", "base": "https://openrouter.ai/api/v1", "model": "m",
+            "id": "test", "base": "https://openrouter.ai/api/v1", "model": "deepseek/test",
             "max_tokens": 4000,
-            "provider": {"only": ["deepseek"], "allow_fallbacks": False},
+            "provider": {"order": chain, "only": chain},
         }
         sent = []
         def fake_post(url, **kwargs):
@@ -259,15 +261,43 @@ class JudgeRetryTests(unittest.TestCase):
         with patch("grader.judges.requests.post", side_effect=fake_post):
             out = judges.call_judge(cfg, "prompt", "key", attempts=1)
         self.assertTrue(out["ok"])
-        self.assertEqual(sent[0]["provider"], {"only": ["deepseek"], "allow_fallbacks": False})
+        self.assertEqual(sent[0]["provider"], {"order": chain, "only": chain})
+        self.assertEqual(out["provider"], "DeepSeek")
 
 
 class ProviderConfigTests(unittest.TestCase):
-    def test_primary_provider_override(self):
-        with patch.dict("os.environ", {"GRADER_PRIMARY_PROVIDER": "deepseek"}):
+    def test_provider_routing_is_order_and_whitelist(self):
+        chain = ["deepseek", "pearl-research"]
+        self.assertEqual(provider_routing("deepseek/deepseek-v4.1-flash-1017", chain),
+                         {"order": chain, "only": chain})
+
+    def test_provider_routing_skips_unmatched_vendor(self):
+        self.assertIsNone(provider_routing("anthropic/claude-haiku-5.5", ["deepseek"]))
+        self.assertIsNone(provider_routing("deepseek/test", []))
+
+    def test_each_judge_has_its_own_chain(self):
+        env = {
+            "GRADER_PRIMARY_PROVIDER_CHAIN": "deepseek,pearl-research",
+            "GRADER_SECONDARY_PROVIDER_CHAIN": "anthropic",
+            "GRADER_TIEBREAKER_PROVIDER_CHAIN": "openai",
+            "GRADER_PRIMARY_MODEL": "deepseek/deepseek-v4.1-flash-1017",
+            "GRADER_SECONDARY_MODEL": "anthropic/claude-haiku-5.5",
+            "GRADER_TIEBREAKER_MODEL": "openai/gpt-6-luna",
+        }
+        with patch.dict("os.environ", env):
+            cfg = load_config()
+        by_id = {j["id"]: j for j in cfg["judges"]}
+        self.assertEqual(by_id["primary"]["provider"],
+                         {"order": ["deepseek", "pearl-research"], "only": ["deepseek", "pearl-research"]})
+        self.assertEqual(by_id["secondary"]["provider"], {"order": ["anthropic"], "only": ["anthropic"]})
+        self.assertEqual(cfg["adjudicator"]["provider"], {"order": ["openai"], "only": ["openai"]})
+
+    def test_chain_for_wrong_vendor_does_not_restrict(self):
+        with patch.dict("os.environ", {"GRADER_PRIMARY_PROVIDER_CHAIN": "anthropic"}):
             cfg = load_config()
         primary = next(j for j in cfg["judges"] if j["id"] == "primary")
-        self.assertEqual(primary["provider"], {"only": ["deepseek"], "allow_fallbacks": False})
+        self.assertEqual(primary["provider_chain"], ["anthropic"])
+        self.assertNotIn("provider", primary)
 
 
 if __name__ == "__main__":

@@ -80,6 +80,9 @@ docker compose up -d --force-recreate
 | `GRADER_PRIMARY_MODEL` | Primary judge model | `deepseek/deepseek-v4-flash` |
 | `GRADER_SECONDARY_MODEL` | Second judge model | `z-ai/glm-5.3-flash` |
 | `GRADER_TIEBREAKER_MODEL` | Tiebreaker model | `deepseek/deepseek-v4-pro` |
+| `GRADER_PRIMARY_PROVIDER_CHAIN` | Ordered primary provider chain | unset |
+| `GRADER_SECONDARY_PROVIDER_CHAIN` | Ordered secondary provider chain | unset |
+| `GRADER_TIEBREAKER_PROVIDER_CHAIN` | Ordered tiebreaker provider chain | unset |
 | `OPENROUTER_API_KEY` | One key for all three models | required |
 | `GRADER_API_TOKEN` | Local API token | required |
 | `LDR_USER` / `LDR_PASS` | LDR login; only needed when LDR is enabled | optional |
@@ -173,15 +176,15 @@ Use `docker save`/`docker load` for now:
 
 ```bash
 # current VM
-docker save grader:0.2.12 | gzip > dist/grader-0.2.12.tar.gz
-sha256sum dist/grader-0.2.12.tar.gz
+docker save grader:0.2.13 | gzip > dist/grader-0.2.13.tar.gz
+sha256sum dist/grader-0.2.13.tar.gz
 
 # copy the image and these files to the remote host
-scp dist/grader-0.2.12.tar.gz remote-host:/tmp/
+scp dist/grader-0.2.13.tar.gz remote-host:/tmp/
 scp docker-compose.yml config.json .env remote-host:~/grader/
 
 # remote host
-gunzip -c /tmp/grader-0.2.12.tar.gz | docker load
+gunzip -c /tmp/grader-0.2.13.tar.gz | docker load
 cd ~/.hermes/workspace/grader
 mkdir -p state/reports state/backups
 # copy state/ from the old VM or restore the latest backup

@@ -52,6 +52,7 @@ def _persist_runs(paper_id: str, grade_id: str | None, results: list, prompt_has
             "latency_ms": result.get("latency_ms"),
             "prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens"),
             "cost_usd": usage.get("cost"), "prompt_hash": prompt_hash_value, "temperature": 0.1,
+            "served_provider": result.get("provider"),
         })
 
 

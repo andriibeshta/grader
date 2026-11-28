@@ -100,6 +100,7 @@ def call_judge(cfg: dict, prompt: str, api_key: str, attempts: int = 3,
     last_error = None
     last_usage = {}
     last_latency = 0
+    last_provider = ""
     for attempt in range(attempts):
         t0 = time.time()
         try:
@@ -123,6 +124,11 @@ def call_judge(cfg: dict, prompt: str, api_key: str, attempts: int = 3,
                 time.sleep(min(retry_max, retry_base * (2 ** attempt)))
             continue
         data = r.json()
+        last_provider = str(data.get("provider") or "")
+        if last_provider:
+            preferred = (cfg.get("provider") or {}).get("order", [None])[0]
+            if preferred and last_provider.lower() != str(preferred).lower():
+                print(f"[judge] {cfg['id']} preferred {preferred}, served by {last_provider}", flush=True)
         try:
             content = data["choices"][0]["message"]["content"]
         except Exception:
@@ -140,7 +146,7 @@ def call_judge(cfg: dict, prompt: str, api_key: str, attempts: int = 3,
                 time.sleep(min(retry_max, retry_base * (2 ** attempt)))
                 continue
             return {"ok": False, "error": last_error, "raw": "", "usage": last_usage,
-                    "latency_ms": last_latency}
+                    "latency_ms": last_latency, "provider": last_provider}
         try:
             scores = validate(extract_json(content))
         except Exception as e:
@@ -150,14 +156,14 @@ def call_judge(cfg: dict, prompt: str, api_key: str, attempts: int = 3,
                 time.sleep(min(retry_max, retry_base * (2 ** attempt)))
                 continue
             return {"ok": False, "error": last_error, "raw": content, "usage": last_usage,
-                    "latency_ms": last_latency}
+                    "latency_ms": last_latency, "provider": last_provider}
         return {
             "ok": True, "scores": scores, "raw": content, "usage": last_usage,
-            "latency_ms": last_latency,
+            "latency_ms": last_latency, "provider": last_provider,
             "overall": round(sum(scores[k] * WEIGHTS[k] for k in WEIGHTS), 2),
         }
     return {"ok": False, "error": f"{last_error or 'unknown judge error'} (after {attempts} attempts)",
-            "raw": "", "usage": last_usage, "latency_ms": last_latency}
+            "raw": "", "usage": last_usage, "latency_ms": last_latency, "provider": last_provider}
 
 
 def _median(vals: list[float]) -> float:

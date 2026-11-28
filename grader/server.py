@@ -202,10 +202,15 @@ class Handler(BaseHTTPRequestHandler):
         if p == "/health":
             judges = []
             for j in CFG.get("judges", []):
-                judges.append({"id": j["id"], "model": j["model"], "key_present": bool(os.environ.get(j["env_key"], "")),
+                judges.append({"id": j["id"], "model": j["model"],
+                               "provider_chain": j.get("provider_chain") or [],
+                               "key_present": bool(os.environ.get(j["env_key"], "")),
                                "available": db.judge_available(j["id"])})
+            adj = CFG.get("adjudicator", {})
             return self._send(200, {"ok": True, "service": "grader", "db": str(db.DB_PATH),
                                     "queued": len(db.queued_jobs()), "judges": judges,
+                                    "adjudicator": {"id": adj.get("id"), "model": adj.get("model"),
+                                                    "provider_chain": adj.get("provider_chain") or []},
                                     "adapters": {"ldr": {"enabled": bool(CFG.get("ldr", {}).get("enabled")),
                                                          "base": CFG.get("ldr", {}).get("base") if CFG.get("ldr", {}).get("enabled") else None}},
                                     "judge_health": [db.get_judge_health(j["id"]) for j in CFG.get("judges", [])]})

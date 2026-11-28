@@ -110,6 +110,7 @@ def init_db() -> None:
           cost_usd REAL,
           prompt_hash TEXT,
           temperature REAL,
+          served_provider TEXT,
           created_at TEXT NOT NULL
         );
         CREATE TABLE IF NOT EXISTS audit (
@@ -176,6 +177,8 @@ def init_db() -> None:
             c.execute("ALTER TABLE judge_runs ADD COLUMN prompt_hash TEXT")
         if "temperature" not in judge_cols:
             c.execute("ALTER TABLE judge_runs ADD COLUMN temperature REAL")
+        if "served_provider" not in judge_cols:
+            c.execute("ALTER TABLE judge_runs ADD COLUMN served_provider TEXT")
 
 
 def audit(actor: str, action: str, payload: dict | None = None) -> None:
@@ -455,13 +458,13 @@ def save_judge_run(data: dict) -> None:
     with conn() as c:
         c.execute("""INSERT INTO judge_runs
             (run_id,paper_id,grade_id,judge_id,judge_model,family,raw_response,scores_json,overall,parse_ok,error,
-             latency_ms,prompt_tokens,completion_tokens,cost_usd,prompt_hash,temperature,created_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+             latency_ms,prompt_tokens,completion_tokens,cost_usd,prompt_hash,temperature,served_provider,created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
             data.get("run_id") or uuid.uuid4().hex, data["paper_id"], data.get("grade_id"), data["judge_id"],
             data["judge_model"], data.get("family"), data.get("raw_response"), json.dumps(data.get("scores") or {}),
             data.get("overall"), 1 if data.get("parse_ok") else 0, data.get("error"), data.get("latency_ms"),
             data.get("prompt_tokens"), data.get("completion_tokens"), data.get("cost_usd"),
-            data.get("prompt_hash"), data.get("temperature"), now(),
+            data.get("prompt_hash"), data.get("temperature"), data.get("served_provider"), now(),
         ))
 
 

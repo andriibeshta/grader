@@ -150,24 +150,43 @@ def load_config() -> dict:
             judge["model"] = model_overrides[judge["id"]]
     if os.environ.get("GRADER_TIEBREAKER_MODEL"):
         cfg["adjudicator"]["model"] = os.environ["GRADER_TIEBREAKER_MODEL"]
-    provider_overrides = {
-        "primary": os.environ.get("GRADER_PRIMARY_PROVIDER"),
-        "secondary": os.environ.get("GRADER_SECONDARY_PROVIDER"),
-        "tiebreaker": os.environ.get("GRADER_TIEBREAKER_PROVIDER"),
+    chain_env = {
+        "primary": "GRADER_PRIMARY_PROVIDER_CHAIN",
+        "secondary": "GRADER_SECONDARY_PROVIDER_CHAIN",
+        "tiebreaker": "GRADER_TIEBREAKER_PROVIDER_CHAIN",
     }
-    def _provider_pref(raw: str | None) -> dict | None:
-        providers = [x.strip() for x in (raw or "").split(",") if x.strip()]
-        if not providers:
-            return None
-        return {"only": providers, "allow_fallbacks": False}
+    chains = {
+        role: [p.strip() for p in os.environ.get(env, "").split(",") if p.strip()]
+        for role, env in chain_env.items()
+    }
     for judge in cfg.get("judges", []):
-        pref = _provider_pref(provider_overrides.get(judge["id"]))
-        if pref:
-            judge["provider"] = pref
-    pref = _provider_pref(provider_overrides.get("tiebreaker"))
-    if pref:
-        cfg["adjudicator"]["provider"] = pref
+        chain = chains.get(judge["id"]) or []
+        if chain:
+            judge["provider_chain"] = chain
+            routing = provider_routing(judge["model"], chain)
+            if routing:
+                judge["provider"] = routing
+    chain = chains.get("tiebreaker") or []
+    if chain:
+        cfg["adjudicator"]["provider_chain"] = chain
+        routing = provider_routing(cfg["adjudicator"]["model"], chain)
+        if routing:
+            cfg["adjudicator"]["provider"] = routing
     return cfg
+
+
+def provider_routing(model: str, chain: list[str]) -> dict | None:
+    """Ordered OpenRouter provider routing for a matching vendor.
+
+    The chain is both preference order and whitelist. Models whose vendor
+    prefix is not in the chain are left with default OpenRouter routing.
+    """
+    if not chain:
+        return None
+    vendor = model.split("/", 1)[0].strip().lower() if "/" in model else ""
+    if vendor not in [p.lower() for p in chain]:
+        return None
+    return {"order": list(chain), "only": list(chain)}
 
 
 def api_token() -> str:

@@ -83,7 +83,7 @@ The release image is self-contained:
 
 ```bash
 mkdir -p ~/grader && cd ~/grader
-gunzip -c grader-0.2.12.tar.gz | docker load
+gunzip -c grader-0.2.13.tar.gz | docker load
 cp .env.example .env
 
 # Set these two required values:
@@ -119,7 +119,7 @@ name: grader
 
 services:
   grader:
-    image: grader:0.2.12
+    image: grader:0.2.13
     restart: unless-stopped
     user: "${GRADER_UID:-1000}:${GRADER_GID:-1000}"
     env_file: .env
@@ -145,12 +145,12 @@ Then:
 
 ```bash
 mkdir -p state
-docker load -i grader-0.2.12.tar.gz
+docker load -i grader-0.2.13.tar.gz
 docker compose up -d
 curl -sS http://127.0.0.1:9131/health/ready
 ```
 
-For a source build, replace `image: grader:0.2.12` with `build: .` and run
+For a source build, replace `image: grader:0.2.13` with `build: .` and run
 `docker compose up -d --build`.
 
 The full [`docker-compose.release.yml`](docker-compose.release.yml) adds
@@ -178,6 +178,9 @@ Common optional settings:
 | `GRADER_PRIMARY_MODEL` | Primary judge model | `deepseek/deepseek-v4-flash` |
 | `GRADER_SECONDARY_MODEL` | Secondary judge model | `z-ai/glm-5.3-flash` |
 | `GRADER_TIEBREAKER_MODEL` | Tiebreaker model | `deepseek/deepseek-v4-pro` |
+| `GRADER_PRIMARY_PROVIDER_CHAIN` | Ordered primary provider chain | unset |
+| `GRADER_SECONDARY_PROVIDER_CHAIN` | Ordered secondary provider chain | unset |
+| `GRADER_TIEBREAKER_PROVIDER_CHAIN` | Ordered tiebreaker provider chain | unset |
 | `GRADER_LDR_ENABLED` | Enable the optional LDR watcher | `false` |
 | `GRADER_LDR_BASE` | LDR API base | `http://127.0.0.1:5000` |
 | `GRADER_RUBRIC_OVERLAY` | Custom rubric directory | unset |
@@ -185,6 +188,12 @@ Common optional settings:
 
 `config.json` is optional; `{}` is sufficient. All model roles use OpenRouter
 by default and can be changed to another compatible gateway and model IDs.
+
+Provider chains follow the same semantics as Curator: the first provider is
+preferred, later entries are fallback tiers, and the chain is also the
+whitelist. A chain only applies when the model's vendor prefix is present in
+that role's chain; otherwise OpenRouter default routing is used. Leave a chain
+unset for default routing. A one-entry chain means primary-only for that role.
 
 ## API
 
