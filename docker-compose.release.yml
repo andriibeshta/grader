@@ -12,7 +12,7 @@ name: grader
 
 services:
   grader:
-    image: ${GRADER_IMAGE:-grader:0.2.11}
+    image: ${GRADER_IMAGE:-grader:0.2.12}
     restart: always
     user: "${GRADER_UID:-1000}:${GRADER_GID:-1000}"
     environment:
@@ -31,6 +31,9 @@ services:
       GRADER_PRIMARY_MODEL: ${GRADER_PRIMARY_MODEL:-deepseek/deepseek-v4-flash}
       GRADER_SECONDARY_MODEL: ${GRADER_SECONDARY_MODEL:-z-ai/glm-5.3-flash}
       GRADER_TIEBREAKER_MODEL: ${GRADER_TIEBREAKER_MODEL:-deepseek/deepseek-v4-pro}
+      GRADER_PRIMARY_PROVIDER: ${GRADER_PRIMARY_PROVIDER:-}
+      GRADER_SECONDARY_PROVIDER: ${GRADER_SECONDARY_PROVIDER:-}
+      GRADER_TIEBREAKER_PROVIDER: ${GRADER_TIEBREAKER_PROVIDER:-}
       GRADER_API_TOKEN: ${GRADER_API_TOKEN:?GRADER_API_TOKEN must be set in .env}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?OPENROUTER_API_KEY must be set in .env}
       LDR_USER: ${LDR_USER:-}

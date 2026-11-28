@@ -95,6 +95,8 @@ def call_judge(cfg: dict, prompt: str, api_key: str, attempts: int = 3,
         "max_tokens": cfg.get("max_tokens", 4000),
         "response_format": {"type": "json_object"},
     }
+    if cfg.get("provider"):
+        body["provider"] = cfg["provider"]
     last_error = None
     last_usage = {}
     last_latency = 0

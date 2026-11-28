@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch
 from grader import db
 from grader import judges
 from grader import pipeline
+from grader.config import load_config
 from grader.ingest import _safe_url, ingest_bytes, ingest_file, ingest_text, report_usable
 from grader.judges import extract_json, validate
 from grader.rubrics import resolve
@@ -240,6 +241,33 @@ class JudgeRetryTests(unittest.TestCase):
         self.assertIn("response_format", sent[0])
         self.assertNotIn("response_format", sent[2])
         self.assertGreater(sent[2]["max_tokens"], 4000)
+
+    def test_provider_preference_is_sent(self):
+        scores = {"accuracy": 8, "coverage": 8, "critical": 8, "sources": 8, "structure": 8,
+                  "action": 8, "fact_errors": [], "notes": "ok"}
+        response = Mock(status_code=200)
+        response.json.return_value = {"choices": [{"message": {"content": json.dumps(scores)}}], "usage": {}}
+        cfg = {
+            "id": "test", "base": "https://openrouter.ai/api/v1", "model": "m",
+            "max_tokens": 4000,
+            "provider": {"only": ["deepseek"], "allow_fallbacks": False},
+        }
+        sent = []
+        def fake_post(url, **kwargs):
+            sent.append(kwargs["json"].copy())
+            return response
+        with patch("grader.judges.requests.post", side_effect=fake_post):
+            out = judges.call_judge(cfg, "prompt", "key", attempts=1)
+        self.assertTrue(out["ok"])
+        self.assertEqual(sent[0]["provider"], {"only": ["deepseek"], "allow_fallbacks": False})
+
+
+class ProviderConfigTests(unittest.TestCase):
+    def test_primary_provider_override(self):
+        with patch.dict("os.environ", {"GRADER_PRIMARY_PROVIDER": "deepseek"}):
+            cfg = load_config()
+        primary = next(j for j in cfg["judges"] if j["id"] == "primary")
+        self.assertEqual(primary["provider"], {"only": ["deepseek"], "allow_fallbacks": False})
 
 
 if __name__ == "__main__":

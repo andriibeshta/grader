@@ -150,6 +150,23 @@ def load_config() -> dict:
             judge["model"] = model_overrides[judge["id"]]
     if os.environ.get("GRADER_TIEBREAKER_MODEL"):
         cfg["adjudicator"]["model"] = os.environ["GRADER_TIEBREAKER_MODEL"]
+    provider_overrides = {
+        "primary": os.environ.get("GRADER_PRIMARY_PROVIDER"),
+        "secondary": os.environ.get("GRADER_SECONDARY_PROVIDER"),
+        "tiebreaker": os.environ.get("GRADER_TIEBREAKER_PROVIDER"),
+    }
+    def _provider_pref(raw: str | None) -> dict | None:
+        providers = [x.strip() for x in (raw or "").split(",") if x.strip()]
+        if not providers:
+            return None
+        return {"only": providers, "allow_fallbacks": False}
+    for judge in cfg.get("judges", []):
+        pref = _provider_pref(provider_overrides.get(judge["id"]))
+        if pref:
+            judge["provider"] = pref
+    pref = _provider_pref(provider_overrides.get("tiebreaker"))
+    if pref:
+        cfg["adjudicator"]["provider"] = pref
     return cfg
 
 
